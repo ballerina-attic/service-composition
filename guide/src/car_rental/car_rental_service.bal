@@ -44,18 +44,25 @@ import ballerina/log;
 //}
 
 // Service endpoint
-listener http:Listener carEP = new(9093);
+listener http:Listener carEP = new (9093);
 
 // Available car types
-final string AC = "Air Conditioned";
-final string NORMAL = "Normal";
+const AC = "AIR CONDITIONED";
+const NORMAL = "NORMAL";
 
 // Car rental service to rent cars
-@http:ServiceConfig {basePath:"/car"}
+@http:ServiceConfig {
+    basePath: "/car"
+}
 service carRentalService on carEP {
 
     // Resource to rent a car
-    @http:ResourceConfig {methods:["POST"], path:"/rent", consumes:["application/json"], produces:["application/json"]}
+    @http:ResourceConfig {
+        methods: ["POST"],
+        path: "/rent",
+        consumes: ["application/json"],
+        produces: ["application/json"]
+    }
     resource function rentCar(http:Caller caller, http:Request request) {
         http:Response response = new;
         json reqPayload = {};
@@ -68,21 +75,21 @@ service carRentalService on carEP {
         } else {
             // NOT a valid JSON payload
             response.statusCode = 400;
-            response.setJsonPayload({"Message":"Invalid payload - Not a valid JSON payload"});
+            response.setJsonPayload({"Message": "Invalid payload - Not a valid JSON payload"});
             var result = caller->respond(response);
             handleError(result);
             return;
         }
 
-        json name = reqPayload.Name;
-        json arrivalDate = reqPayload.ArrivalDate;
-        json departDate = reqPayload.DepartureDate;
-        json preferredType = reqPayload.Preference;
+        json | error name = reqPayload.Name;
+        json | error arrivalDate = reqPayload.ArrivalDate;
+        json | error departDate = reqPayload.DepartureDate;
+        json | error preferredType = reqPayload.Preference;
 
         // If payload parsing fails, send a "Bad Request" message as the response
-        if (name == () || arrivalDate == () || departDate == () || preferredType == ()) {
+        if (name is error || arrivalDate is error || departDate is error || preferredType is error) {
             response.statusCode = 400;
-            response.setJsonPayload({"Message":"Bad Request - Invalid Payload"});
+            response.setJsonPayload({"Message": "Bad Request - Invalid Payload"});
             var result = caller->respond(response);
             handleError(result);
             return;
@@ -91,12 +98,12 @@ service carRentalService on carEP {
         // Mock logic
         // If request is for an available car type, send a rental successful status
         string preferredTypeStr = preferredType.toString();
-        if (preferredTypeStr.equalsIgnoreCase(AC) || preferredTypeStr.equalsIgnoreCase(NORMAL)) {
-            response.setJsonPayload({"Status":"Success"});
+        if (preferredTypeStr.toUpperAscii() == AC || preferredTypeStr.toUpperAscii() == NORMAL) {
+            response.setJsonPayload({"Status": "Success"});
         }
         else {
             // If request is not for an available car type, send a rental failure status
-            response.setJsonPayload({"Status":"Failed"});
+            response.setJsonPayload({"Status": "Failed"});
         }
         // Send the response
         var result = caller->respond(response);

@@ -21,7 +21,7 @@ import ballerina/http;
 http:Client clientEP = new("http://localhost:9090/travel");
 
 // Function to test Travel agency service
-@test:Config
+@test:Config {}
 function testTravelAgencyService() returns error? {
     // Initialize the empty http requests and responses
     http:Request req;

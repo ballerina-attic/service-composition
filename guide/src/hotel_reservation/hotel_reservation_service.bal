@@ -44,19 +44,25 @@ import ballerina/log;
 //}
 
 // Service endpoint
-listener http:Listener hotelEP = new(9092);
+listener http:Listener hotelEP = new (9092);
 
 // Available room types
-final string AC = "Air Conditioned";
-final string NORMAL = "Normal";
+const AC = "AIR CONDITIONED";
+const NORMAL = "NORMAL";
 
 // Hotel reservation service to reserve hotel rooms
-@http:ServiceConfig {basePath:"/hotel"}
+@http:ServiceConfig {
+    basePath: "/hotel"
+}
 service hotelReservationService on hotelEP {
 
     // Resource to reserve a room
-    @http:ResourceConfig {methods:["POST"], path:"/reserve", consumes:["application/json"],
-        produces:["application/json"]}
+    @http:ResourceConfig {
+        methods: ["POST"],
+        path: "/reserve",
+        consumes: ["application/json"],
+        produces: ["application/json"]
+    }
     resource function reserveRoom(http:Caller caller, http:Request request) {
         http:Response response = new;
         json reqPayload = {};
@@ -69,21 +75,21 @@ service hotelReservationService on hotelEP {
         } else {
             // NOT a valid JSON payload
             response.statusCode = 400;
-            response.setJsonPayload({"Message":"Invalid payload - Not a valid JSON payload"});
+            response.setJsonPayload({"Message": "Invalid payload - Not a valid JSON payload"});
             var result = caller->respond(response);
             handleError(result);
             return;
         }
 
-        json name = reqPayload.Name;
-        json arrivalDate = reqPayload.ArrivalDate;
-        json departDate = reqPayload.DepartureDate;
-        json preferredRoomType = reqPayload.Preference;
+        json | error name = reqPayload.Name;
+        json | error arrivalDate = reqPayload.ArrivalDate;
+        json | error departDate = reqPayload.DepartureDate;
+        json | error preferredRoomType = reqPayload.Preference;
 
         // If payload parsing fails, send a "Bad Request" message as the response
-        if (name == () || arrivalDate == () || departDate == () || preferredRoomType == ()) {
+        if (name is error || arrivalDate is error || departDate is error || preferredRoomType is error) {
             response.statusCode = 400;
-            response.setJsonPayload({"Message":"Bad Request - Invalid Payload"});
+            response.setJsonPayload({"Message": "Bad Request - Invalid Payload"});
             var result = caller->respond(response);
             handleError(result);
             return;
@@ -92,12 +98,12 @@ service hotelReservationService on hotelEP {
         // Mock logic
         // If request is for an available room type, send a reservation successful status
         string preferredTypeStr = preferredRoomType.toString();
-        if (preferredTypeStr.equalsIgnoreCase(AC) || preferredTypeStr.equalsIgnoreCase(NORMAL)) {
-            response.setJsonPayload({"Status":"Success"});
+        if (preferredTypeStr.toUpperAscii() == AC || preferredTypeStr.toUpperAscii() == NORMAL) {
+            response.setJsonPayload({"Status": "Success"});
         }
         else {
             // If request is not for an available room type, send a reservation failure status
-            response.setJsonPayload({"Status":"Failed"});
+            response.setJsonPayload({"Status": "Failed"});
         }
         // Send the response
         var result = caller->respond(response);

@@ -21,7 +21,7 @@ import ballerina/http;
 http:Client clientEP = new("http://localhost:9091/airline");
 
 // Function to test Airline reservation service
-@test:Config
+@test:Config { }
 function testAirlineReservationService() returns error? {
     // Test the 'reserveTicket' resource
     // Construct a request payload

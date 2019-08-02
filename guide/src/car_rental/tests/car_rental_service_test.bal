@@ -21,7 +21,7 @@ import ballerina/http;
 http:Client clientEP = new("http://localhost:9093/car");
 
 // Function to test Car rental service
-@test:Config
+@test:Config {}
 function testCarRentalService() returns error? {
     // Test the 'rentCar' resource
     // Construct a request payload
