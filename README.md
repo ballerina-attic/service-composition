@@ -37,36 +37,43 @@ Travel agency is the service that acts as the composition initiator. The other t
 
 ### Create the project structure
 
-Ballerina is a complete programming language that supports custom project structures. Use the following module structure
- for this guide.
+Ballerina is a complete programming language that supports custom project structures.
+This guide uses the following structure.
 
+```service-composition
+     └── guide
+           └── src
+               ├── airline_reservation
+               │   ├── airline_reservation_service.bal
+               │   └── tests
+               │       └── airline_reservation_service_test.bal
+               ├── car_rental
+               │   ├── car_rental_service.bal
+               │   └── tests
+               │       └── car_rental_service_test.bal
+               ├── hotel_reservation
+               │   ├── hotel_reservation_service.bal
+               │   └── tests
+               │       └── hotel_reservation_service_test.bal
+               └── travel_agency
+                   ├── ballerina.conf
+                   ├── tests
+                   │   └── travel_agency_service_test.bal
+                   └── travel_agency_service.bal
 ```
-service-composition
-  └── guide
-      ├── airline_reservation
-      │   ├── airline_reservation_service.bal
-      │   └── tests
-      │       └── airline_reservation_service_test.bal
-      ├── car_rental
-      │   ├── car_rental_service.bal
-      │   └── tests
-      │       └── car_rental_service_test.bal
-      ├── hotel_reservation
-      │   ├── hotel_reservation_service.bal
-      │   └── tests
-      │       └── hotel_reservation_service_test.bal
-      └── travel_agency
-          ├── travel_agency_service.bal
-          └── tests
-              └── travel_agency_service_test.bal
-```
 
-- Create the above directories in your local machine and also create empty `.bal` files.
-
-- Then open the terminal and navigate to `service-composition/guide` and run Ballerina project initializing toolkit.
+- To create the basic project structure run the following command.
 ```bash
-   $ ballerina init
+   $ ballerina create guide
 ```
+
+- Now, navigate to the `guide` directory and run the following command to create the new module `airline_reservation`.
+
+```bash
+    $ ballerina create airline_reservation
+```
+
+Repeat the same step to create the `car_rental`, `hotel_reservation` and `travel_agency` modules.
 
 ### Developing the service
 
@@ -86,14 +93,14 @@ Sample response payload:
 {"Status":"Success"}
 ```
 
-When a client initiates a request to arrange a tour, the travel agency service first needs to communicate with the airline reservation service to book a flight ticket. To check the implementation of airline reservation service, see the [airline_reservation_service.bal](https://github.com/ballerina-guides/service-composition/blob/master/guide/airline_reservation/airline_reservation_service.bal) file.
+When a client initiates a request to arrange a tour, the travel agency service first needs to communicate with the airline reservation service to book a flight ticket. To check the implementation of airline reservation service, see the [airline_reservation_service.bal](https://github .com/ballerina-guides/service-composition/blob/master/guide/src/airline_reservation/airline_reservation_service.bal) file.
 
-Once the airline ticket reservation is successful, the travel agency service needs to communicate with the hotel reservation service to reserve hotel rooms. To check the implementation of hotel reservation service, see the [hotel_reservation_service.bal](https://github.com/ballerina-guides/service-composition/blob/master/guide/hotel_reservation/hotel_reservation_service.bal) file.
+Once the airline ticket reservation is successful, the travel agency service needs to communicate with the hotel reservation service to reserve hotel rooms. To check the implementation of hotel reservation service, see the [hotel_reservation_service.bal](https://github.com/ballerina-guides/service-composition/blob/master/guide/src/hotel_reservation/hotel_reservation_service.bal) file.
 
-Finally, the travel agency service needs to connect with the car rental service to arrange internal transports. To check the implementation of car rental service, see the [car_rental_service.bal](https://github.com/ballerina-guides/service-composition/blob/master/guide/car_rental/car_rental_service.bal) file.
+Finally, the travel agency service needs to connect with the car rental service to arrange internal transports. To check the implementation of car rental service, see the [car_rental_service.bal](https://github.com/ballerina-guides/service-composition/blob/master/guide/src/car_rental/car_rental_service.bal) file.
 
 If all services work successfully, the travel agency service confirms and arrange the complete tour for the user. The skeleton of `travel_agency_service.bal` file is attached below. Inline comments are added for better understanding.
-Refer to the [travel_agency_service.bal](https://github.com/ballerina-guides/service-composition/blob/master/guide/travel_agency/travel_agency_service.bal) to see the complete implementation of the travel agency service.
+Refer to the [travel_agency_service.bal](https://github.com/ballerina-guides/service-composition/blob/master/guide/src/travel_agency/travel_agency_service.bal) to see the complete implementation of the travel agency service.
 
 ##### travel_agency_service.bal
 
@@ -148,8 +155,8 @@ Let's now look at the code segment that is responsible for parsing the JSON payl
 ```ballerina
 // Try parsing the JSON payload from the user request
 var payload = inRequest.getJsonPayload();
-if (payload is json) {
-    // Valid JSON payload
+if (payload is map<json>) {
+    // Valid JSON payload, which is a JSON object.
     inReqPayload = payload;
 } else {
     // NOT a valid JSON payload
@@ -160,17 +167,16 @@ if (payload is json) {
     return;
 }
 
-outReqPayload.Name = inReqPayload.Name;
-outReqPayload.ArrivalDate = inReqPayload.ArrivalDate;
-outReqPayload.DepartureDate = inReqPayload.DepartureDate;
-json airlinePreference = inReqPayload.Preference.Airline;
-json hotelPreference = inReqPayload.Preference.Accommodation;
-json carPreference = inReqPayload.Preference.Car;
+outReqPayload["Name"] = inReqPayload["Name"];
+outReqPayload["ArrivalDate"] = inReqPayload["ArrivalDate"];
+outReqPayload["DepartureDate"] = inReqPayload["DepartureDate"];
+json | error airlinePreference = inReqPayload.Preference.Airline;
+json | error hotelPreference = inReqPayload.Preference.Accommodation;
+json | error carPreference = inReqPayload.Preference.Car;
 
 // If payload parsing fails, send a "Bad Request" message as the response
-if (outReqPayload.Name == () || outReqPayload.ArrivalDate == () ||
-    outReqPayload.DepartureDate == () || airlinePreference == () ||
-    hotelPreference == () || carPreference == ()) {
+if (outReqPayload.Name is () || outReqPayload.ArrivalDate is () || outReqPayload.DepartureDate is () ||
+        airlinePreference is error || hotelPreference is error || carPreference is error) {
     outResponse.statusCode = 400;
     outResponse.setJsonPayload({"Message":"Bad Request - Invalid Payload"});
     var result = caller->respond(outResponse);
@@ -184,20 +190,21 @@ The above code shows how the request JSON payload is parsed to create JSON liter
 Let's now look at the code segment that is responsible for communicating with the airline reservation service. 
 
 ```ballerina
-// Reserve airline ticket for the user by calling Airline reservation service
-// construct the payload
-json outReqPayloadAirline = outReqPayload;
-outReqPayloadAirline.Preference = airlinePreference;
+// Reserve airline ticket for the user by calling Airline reservation service.
+// Construct the payload by first creating a clone of `outReqPayload` to which
+// the airline preference will then be set.
+map<json> outReqPayloadAirline = outReqPayload.clone();
+outReqPayloadAirline["Preference"] = <json>airlinePreference;
 
 // Send a post request to airline service with appropriate payload and get response
 http:Response inResAirline = check airlineReservationEP->post("/reserve",
-                                                    untaint outReqPayloadAirline);
+                                                    <@untainted> outReqPayloadAirline);
 
 // Get the reservation status
 var airlineResPayload = check inResAirline.getJsonPayload();
 string airlineStatus = airlineResPayload.Status.toString();
 // If reservation status is negative, send a failure response to user
-if (airlineStatus.equalsIgnoreCase("Failed")) {
+if (airlineStatus != "Success") {
     outResponse.setJsonPayload({"Message":"Failed to reserve airline! " +
             "Provide a valid 'Preference' for 'Airline' and try again"});
     var result = caller->respond(outResponse);
@@ -212,20 +219,20 @@ The above code shows how the travel agency service initiates a request to the ai
 Let's now look at the code segment that is responsible for communicating with the hotel reservation service. 
 
 ```ballerina
-// Reserve hotel room for the user by calling Hotel reservation service
-// construct the payload
-json outReqPayloadHotel = outReqPayload;
-outReqPayloadHotel.Preference = hotelPreference;
+// Reserve hotel room for the user by calling Hotel reservation service.
+// Construct the payload.
+map<json> outReqPayloadHotel = outReqPayload.clone();
+outReqPayloadHotel["Preference"] = <json>hotelPreference;
 
 // Send a post request to hotel service with appropriate payload and get response
 http:Response inResHotel = check hotelReservationEP->post("/reserve",
-                                                    untaint outReqPayloadHotel);
+                                                    <@untainted> outReqPayloadHotel);
 
 // Get the reservation status
 var hotelResPayload = check inResHotel.getJsonPayload();
 string hotelStatus = hotelResPayload.Status.toString();
 // If reservation status is negative, send a failure response to user
-if (hotelStatus.equalsIgnoreCase("Failed")) {
+if (hotelStatus != "Success") {
     outResponse.setJsonPayload({"Message":"Failed to reserve hotel! " +
             "Provide a valid 'Preference' for 'Accommodation' and try again"});
     var result = caller->respond(outResponse);
@@ -239,19 +246,19 @@ The travel agency service communicates with the hotel reservation service to boo
 Finally, let's look at the code segment that is responsible for communicating with the car rental service. 
 
 ```ballerina
-// Renting car for the user by calling Car rental service
-// construct the payload
-json outReqPayloadCar = outReqPayload;
-outReqPayloadCar.Preference = carPreference;
+// Renting car for the user by calling Car rental service.
+// Construct the payload.
+map<json> outReqPayloadCar = outReqPayload.clone();
+outReqPayloadCar["Preference"] = <json>carPreference;
 
 // Send a post request to car rental service with appropriate payload and get response
-http:Response inResCar = check carRentalEP->post("/rent", untaint outReqPayloadCar);
+http:Response inResCar = check carRentalEP->post("/rent", <@untainted> outReqPayloadCar);
 
 // Get the rental status
 var carResPayload = check inResCar.getJsonPayload();
 string carRentalStatus = carResPayload.Status.toString();
 // If rental status is negative, send a failure response to user
-if (carRentalStatus.equalsIgnoreCase("Failed")) {
+if (carRentalStatus != "Success") {
     outResponse.setJsonPayload({"Message":"Failed to rent car! " +
             "Provide a valid 'Preference' for 'Car' and try again"});
     var result = caller->respond(outResponse);
@@ -303,7 +310,7 @@ In Ballerina, the unit test cases should be in the same module inside a folder n
 functions the below convention should be followed.
 - Test functions should be annotated with `@test:Config`. See the below example.
 ```ballerina
-   @test:Config
+   @test:Config {}
    function testTravelAgencyService () {
 ```
   
@@ -314,7 +321,7 @@ To run the tests, open your terminal and navigate to `service-composition/guide`
    $ ballerina test
 ```
 
-To check the implementations of these test files, refer to the [airline_reservation_service_test.bal](https://github.com/ballerina-guides/service-composition/blob/master/guide/airline_reservation/tests/airline_reservation_service_test.bal), [hotel_reservation_service_test.bal](https://github.com/ballerina-guides/service-composition/blob/master/guide/hotel_reservation/tests/hotel_reservation_service_test.bal), [car_rental_service_test.bal](https://github.com/ballerina-guides/service-composition/blob/master/guide/car_rental/tests/car_rental_service_test.bal) and [travel_agency_service_test.bal](https://github.com/ballerina-guides/service-composition/blob/master/guide/tests/travel_agency_service_test.bal).
+To check the implementations of these test files, refer to the [airline_reservation_service_test.bal](https://github.com/ballerina-guides/service-composition/blob/master/guide/src/airline_reservation/tests/airline_reservation_service_test.bal), [hotel_reservation_service_test.bal](https://github.com/ballerina-guides/service-composition/blob/master/guide/src/hotel_reservation/tests/hotel_reservation_service_test.bal), [car_rental_service_test.bal](https://github.com/ballerina-guides/service-composition/blob/master/guide/src/car_rental/tests/car_rental_service_test.bal) and [travel_agency_service_test.bal](https://github.com/ballerina-guides/service-composition/blob/master/guide/src/travel_agency/tests/travel_agency_service_test.bal).
 
 ## Deployment
 

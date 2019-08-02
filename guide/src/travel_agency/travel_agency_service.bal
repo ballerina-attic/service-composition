@@ -70,7 +70,7 @@ service travelAgencyService on travelAgencyEP {
     resource function arrangeTour(http:Caller caller, http:Request inRequest) returns error? {
         http:Response outResponse = new;
         map<json> inReqPayload = {};
-        // Json payload format for an http out request
+        // JSON payload format for an HTTP out request.
         map<json> outReqPayload = {"Name": "", "ArrivalDate": "", "DepartureDate": "", "Preference": ""};
 
         // Try parsing the JSON payload from the user request
