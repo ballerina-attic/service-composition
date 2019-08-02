@@ -93,7 +93,7 @@ Sample response payload:
 {"Status":"Success"}
 ```
 
-When a client initiates a request to arrange a tour, the travel agency service first needs to communicate with the airline reservation service to book a flight ticket. To check the implementation of airline reservation service, see the [airline_reservation_service.bal](https://github .com/ballerina-guides/service-composition/blob/master/guide/src/airline_reservation/airline_reservation_service.bal) file.
+When a client initiates a request to arrange a tour, the travel agency service first needs to communicate with the airline reservation service to book a flight ticket. To check the implementation of airline reservation service, see the [airline_reservation_service.bal](https://github.com/ballerina-guides/service-composition/blob/master/guide/src/airline_reservation/airline_reservation_service.bal) file.
 
 Once the airline ticket reservation is successful, the travel agency service needs to communicate with the hotel reservation service to reserve hotel rooms. To check the implementation of hotel reservation service, see the [hotel_reservation_service.bal](https://github.com/ballerina-guides/service-composition/blob/master/guide/src/hotel_reservation/hotel_reservation_service.bal) file.
 

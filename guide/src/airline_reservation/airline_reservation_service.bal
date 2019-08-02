@@ -63,7 +63,7 @@ service airlineReservationService on airlineEP {
         produces: ["application/json"]
     }
     resource function reserveTicket(http:Caller caller, http:Request request) {
-        http:Response response = new ();
+        http:Response response = new;
         json reqPayload = {};
 
         var payload = request.getJsonPayload();

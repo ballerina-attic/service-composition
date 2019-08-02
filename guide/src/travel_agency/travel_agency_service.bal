@@ -115,7 +115,7 @@ service travelAgencyService on travelAgencyEP {
 
         // Get the reservation status
         var airlineResPayload = check inResAirline.getJsonPayload();
-        string airlineStatus =airlineResPayload.Status.toString();
+        string airlineStatus = airlineResPayload.Status.toString();
         // If reservation status is negative, send a failure response to user
         if (airlineStatus != "Success") {
             outResponse.setJsonPayload({
@@ -138,7 +138,7 @@ service travelAgencyService on travelAgencyEP {
 
         // Get the reservation status
         var hotelResPayload = check inResHotel.getJsonPayload();
-        string hotelStatus =hotelResPayload.Status.toString();
+        string hotelStatus = hotelResPayload.Status.toString();
         // If reservation status is negative, send a failure response to user
         if (hotelStatus != "Success") {
             outResponse.setJsonPayload({
@@ -160,7 +160,7 @@ service travelAgencyService on travelAgencyEP {
 
         // Get the rental status
         var carResPayload = check inResCar.getJsonPayload();
-        string carRentalStatus =carResPayload.Status.toString();
+        string carRentalStatus = carResPayload.Status.toString();
         // If rental status is negative, send a failure response to user
         if (carRentalStatus != "Success") {
             outResponse.setJsonPayload({
