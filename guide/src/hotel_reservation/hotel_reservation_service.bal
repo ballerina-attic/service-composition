@@ -21,7 +21,7 @@ import ballerina/log;
 
 //@docker:Config {
 //    registry:"ballerina.guides.io",
-//    name:"car_rental_service",
+//    name:"hotel_reservation_service",
 //    tag:"v1.0"
 //}
 //
@@ -29,34 +29,41 @@ import ballerina/log;
 
 //@kubernetes:Ingress {
 //  hostname:"ballerina.guides.io",
-//  name:"ballerina-guides-car-rental-service",
+//  name:"ballerina-guides-hotel-reservation-service",
 //  path:"/"
 //}
 //
 //@kubernetes:Service {
 //  serviceType:"NodePort",
-//  name:"ballerina-guides-car-rental-service"
+//  name:"ballerina-guides-hotel-reservation-service"
 //}
 //
 //@kubernetes:Deployment {
-//  image:"ballerina.guides.io/car_rental_service:v1.0",
-//  name:"ballerina-guides-car-rental-service"
+//  image:"ballerina.guides.io/hotel_reservation_service:v1.0",
+//  name:"ballerina-guides-hotel-reservation-service"
 //}
 
 // Service endpoint
-listener http:Listener carEP = new(9093);
+listener http:Listener hotelEP = new (9092);
 
-// Available car types
-final string AC = "Air Conditioned";
-final string NORMAL = "Normal";
+// Available room types
+const AC = "AIR CONDITIONED";
+const NORMAL = "NORMAL";
 
-// Car rental service to rent cars
-@http:ServiceConfig {basePath:"/car"}
-service carRentalService on carEP {
+// Hotel reservation service to reserve hotel rooms
+@http:ServiceConfig {
+    basePath: "/hotel"
+}
+service hotelReservationService on hotelEP {
 
-    // Resource to rent a car
-    @http:ResourceConfig {methods:["POST"], path:"/rent", consumes:["application/json"], produces:["application/json"]}
-    resource function rentCar(http:Caller caller, http:Request request) {
+    // Resource to reserve a room
+    @http:ResourceConfig {
+        methods: ["POST"],
+        path: "/reserve",
+        consumes: ["application/json"],
+        produces: ["application/json"]
+    }
+    resource function reserveRoom(http:Caller caller, http:Request request) {
         http:Response response = new;
         json reqPayload = {};
 
@@ -68,35 +75,35 @@ service carRentalService on carEP {
         } else {
             // NOT a valid JSON payload
             response.statusCode = 400;
-            response.setJsonPayload({"Message":"Invalid payload - Not a valid JSON payload"});
+            response.setJsonPayload({"Message": "Invalid payload - Not a valid JSON payload"});
             var result = caller->respond(response);
             handleError(result);
             return;
         }
 
-        json name = reqPayload.Name;
-        json arrivalDate = reqPayload.ArrivalDate;
-        json departDate = reqPayload.DepartureDate;
-        json preferredType = reqPayload.Preference;
+        json | error name = reqPayload.Name;
+        json | error arrivalDate = reqPayload.ArrivalDate;
+        json | error departDate = reqPayload.DepartureDate;
+        json | error preferredRoomType = reqPayload.Preference;
 
         // If payload parsing fails, send a "Bad Request" message as the response
-        if (name == () || arrivalDate == () || departDate == () || preferredType == ()) {
+        if (name is error || arrivalDate is error || departDate is error || preferredRoomType is error) {
             response.statusCode = 400;
-            response.setJsonPayload({"Message":"Bad Request - Invalid Payload"});
+            response.setJsonPayload({"Message": "Bad Request - Invalid Payload"});
             var result = caller->respond(response);
             handleError(result);
             return;
         }
 
         // Mock logic
-        // If request is for an available car type, send a rental successful status
-        string preferredTypeStr = preferredType.toString();
-        if (preferredTypeStr.equalsIgnoreCase(AC) || preferredTypeStr.equalsIgnoreCase(NORMAL)) {
-            response.setJsonPayload({"Status":"Success"});
+        // If request is for an available room type, send a reservation successful status
+        string preferredTypeStr = preferredRoomType.toString();
+        if (preferredTypeStr.toUpperAscii() == AC || preferredTypeStr.toUpperAscii() == NORMAL) {
+            response.setJsonPayload({"Status": "Success"});
         }
         else {
-            // If request is not for an available car type, send a rental failure status
-            response.setJsonPayload({"Status":"Failed"});
+            // If request is not for an available room type, send a reservation failure status
+            response.setJsonPayload({"Status": "Failed"});
         }
         // Send the response
         var result = caller->respond(response);
